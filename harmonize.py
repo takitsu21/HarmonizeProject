@@ -27,8 +27,6 @@ import json
 import socket
 import subprocess
 import threading
-import fileinput
-import numpy as np
 import cv2
 import re
 
@@ -337,10 +335,10 @@ def init_video_capture():
     try:
         if commandlineargs.stream_filename is None:
             #cap = cv2.VideoCapture(0,cv2.CAP_FFMPEG) #variable cap is our raw video input
-            cap = cv2.VideoCapture(0,cv2.CAP_GSTREAMER) #variable cap is our raw video input
+            cap = cv2.VideoCapture(0, cv2.CAP_GSTREAMER) #variable cap is our raw video input
         else:
             cap = cv2.VideoCapture(commandlineargs.stream_filename) #capture from given file/url
-    except:
+    except Exception as e:
         sys.exit("ERROR: Issue enabling video capture")
     if cap.isOpened(): # Try to get the first frame
         verbose('INFO: Capture device opened using OpenCV.')
