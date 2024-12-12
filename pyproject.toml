@@ -1,0 +1,13 @@
+[project]
+name = "harmonizeproject"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==1.26.4",
+    "opencv-python>=4.10.0.84",
+    "requests>=2.32.3",
+    "termcolor>=2.5.0",
+    "zeroconf>=0.136.2",
+]
