@@ -21,7 +21,7 @@
 
 import sys
 import argparse
-import requests 
+import requests
 import time
 import json
 import socket
@@ -72,7 +72,7 @@ stopped = False
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
-    
+
 def verbose(*args, **kwargs):
     if commandlineargs.verbose==True:
         print(*args, **kwargs)
@@ -91,14 +91,14 @@ def findhue(): #Auto-find bridges on mDNS network
     ) as exc:
         print("ERROR: Cannot create mDNS service discovery browser: {}".format(exc))
         sys.exit(1)
-    
+
     # wait half a second for mDNS discovery lookup
     time.sleep(0.5)
-    
+
     if len(listener.bridgelist) == 1:
         print("INFO: Single Hue bridge detected on network via mDNS.")
         return listener.bridgelist[0]
-    
+
     bridgelist = []
     if len(listener.bridgelist) == 0:
         print("INFO: Bridge not detected via mDNS lookup, will try via discovery method.")
@@ -107,11 +107,11 @@ def findhue(): #Auto-find bridges on mDNS network
         except:
             sys.exit("ERROR: Discovery method did not execute properly. Please try again later. Exiting application.")
         bridgelist = json.loads(r.text)
-        
+
         if len(bridgelist) == 1:
             print("INFO: Single Hue bridge detected via network discovery.")
             return bridgelist[0]['internalipaddress']
-        
+
         if commandlineargs.bridgeid is not None:
             for idx, b in enumerate(bridgelist):
                 if b["id"] == commandlineargs.bridgeid:
@@ -122,7 +122,7 @@ def findhue(): #Auto-find bridges on mDNS network
                 if b["internalipaddress"] == commandlineargs.bridgeip:
                     return commandlineargs.bridgeip
             sys.exit("ERROR: Bridge {} was not found".format(commandlineargs.bridgeip))
-    
+
     # if multiple bridges detected via mDNS
     if len(listener.bridgelist)>1:
             print("Multiple bridges found via mDNS lookup. Key a number corresponding to the list of bridges below:")
@@ -137,15 +137,15 @@ def findhue(): #Auto-find bridges on mDNS network
             else:
                 bridge = int(input())
                 return listener.bridgelist[bridge-1]
-    
+
     # if multiple bridges detected via network discovery
     if len(bridgelist)>1:
             print("Multiple bridges found via network discovery. Key a number corresponding to the list of bridges below:")
             for index, value in enumerate(bridgelist):
                 print("[" + str(index+1) + "]:", value)
             bridge = int(input())
-            return bridgelist[bridge-1]['internalipaddress']     
-    
+            return bridgelist[bridge-1]['internalipaddress']
+
     return None
 
 def register():
@@ -206,7 +206,7 @@ if Path("./client.json").is_file():
 else:
     register()
 
-verbose("Requesting bridge information...") 
+verbose("Requesting bridge information...")
 r = requests.get(url = baseurl+"/config")
 jsondata = r.json()
 if jsondata["swversion"]<"1948086000": #Check if the bridge supports streaming via API v1/v2
@@ -262,7 +262,7 @@ verbose("INFO: {} light(s) found in selected Entertainment area. Locations [x,y,
 if len(lights_dict) > 20:
    sys.exit("ERROR: {} light(s) found. The maximum allowable is up to 20 per Entertainment area. Exiting application.".format(len(lights_dict)))
 
-# Retrieve PSK identify for APIv2 
+# Retrieve PSK identify for APIv2
 r_v2 = requests.get("https://{}/auth/v1".format(hueip), verify=False, headers={"hue-application-key":clientdata['username']}) # via APIv2
 hue_app_id = r_v2.headers['hue-application-id']
 verbose("Hue application id:",hue_app_id)
@@ -272,7 +272,7 @@ verbose("Enabling streaming to your Entertainment area") #Allows us to send UPD 
 r_v2 = requests.put("https://{}/clip/v2/resource/entertainment_configuration/{}".format(hueip,entertainment_id), json={"action":"start"}, verify=False, headers={"hue-application-key":clientdata['username']}) # via APIv2
 jsondata = r_v2.json()
 verbose(jsondata)
-        
+
 ######### Prepare the messages' vessel for the RGB values we will insert
 bufferlock = threading.Lock()
 
@@ -292,7 +292,7 @@ def averageimage():
 
     scaled_locations = list(lights_dict.items()) #Makes it a list of locations by light
     verbose("INFO: Lights and locations (in order) scaled using video resolution input are as follows: ", scaled_locations)
-  
+
 #### This section assigns light locations to variable light1,2,3...etc. in JSON order
     avgsize = w/2 + h/2
     verbose('INFO: Average number of total pixels of video area to be analyzed is:', avgsize)
@@ -302,7 +302,7 @@ def averageimage():
 
     global cords #array of coordinates
     global bounds #array of bounds for each coord, each item is formatted as [top, bottom, left, right]
-    
+
     #initialize the arrays
     cords = {}
     bounds = {}
@@ -312,7 +312,7 @@ def averageimage():
         bds = list(map(int, bds))
         bds = list(map(lambda x: 0 if x < 0 else x, bds))
         bounds[num] = bds
-   
+
     global rgb,rgb_bytes #array of rgb values, one for each light
     rgb = {}
     rgb_bytes = {}
@@ -325,7 +325,7 @@ def averageimage():
             rgb[x] = cv2.mean(area[x])
         for x, c in rgb.items():
             rgb_bytes[x] = bytearray([int(c[0]/2), int(c[0]/2), int(c[1]/2), int(c[1]/2), int(c[2]/2), int(c[2]/2),] )
-            
+
 ######################################################
 ############ Video Capture Setup #####################
 ######################################################
@@ -335,7 +335,7 @@ def init_video_capture():
     try:
         if commandlineargs.stream_filename is None:
             #cap = cv2.VideoCapture(0,cv2.CAP_FFMPEG) #variable cap is our raw video input
-            cap = cv2.VideoCapture(0, cv2.CAP_GSTREAMER) #variable cap is our raw video input
+            cap = cv2.VideoCapture(0, cv2.CAP_V4L2) #variable cap is our raw video input
         else:
             cap = cv2.VideoCapture(commandlineargs.stream_filename) #capture from given file/url
     except Exception as e:
@@ -358,7 +358,7 @@ def cv2input_to_buffer(): ######### Section opens the device, sets buffer, pulls
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) # gets video height
     verbose("INFO: Video frame size (W by H): {} by {}".format(w, h)) #prints video frame size
 
-########## This section loops & pulls re-colored frames and alwyas get the newest frame 
+########## This section loops & pulls re-colored frames and alwyas get the newest frame
     cap.set(cv2.CAP_PROP_BUFFERSIZE,0) # No frame buffer to avoid lagging, always grab newest frame
     missed_frame_count = 0
     while not stopped:
@@ -398,7 +398,7 @@ def buffer_to_light(proc): #Potentially thread this into 2 processes?
     time.sleep(1.5) #Hold on so DTLS connection can be made & message format can get defined
     while not stopped:
         bufferlock.acquire()
-        
+
         message = bytes('HueStream','utf-8') + b'\2\0\0\0\0\0\0' + bytes(entertainment_id,'utf-8')
 
         if is_single_light:
@@ -407,7 +407,7 @@ def buffer_to_light(proc): #Potentially thread this into 2 processes?
         else:
             for i in rgb_bytes:
                 message += bytes(chr(int(i)), 'utf-8') + rgb_bytes[i]
- 
+
         bufferlock.release()
         proc.stdin.write(message.decode('utf-8','ignore'))
         time.sleep(.0167) #0.01 to 0.02 (slightly under 100 or 50 messages per sec // or (.0167 = ~60))
@@ -419,7 +419,7 @@ def buffer_to_light(proc): #Potentially thread this into 2 processes?
 ######################################################
 
 ######### Section executes video input and establishes the connection stream to bridge ##########
- 
+
 try:
     try:
         threads = list()
@@ -429,7 +429,7 @@ try:
             if commandlineargs.stream_filename is None:
                 subprocess.check_output("ls -ltrh /dev/video0",shell=True)
                 print("INFO: Detected video capture card on /dev/video0")
-        except subprocess.CalledProcessError:                                                                                                  
+        except subprocess.CalledProcessError:
             print("ERROR: Video capture card not detected on /dev/video0")
         else:
             # Check to see if video stream is actually being captured properly before continuing.
