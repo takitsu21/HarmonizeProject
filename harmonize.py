@@ -38,6 +38,8 @@ from termcolor import colored
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+CLIENT_PATH = "./data/client.json"
+
 class MyListener(ServiceListener):
     bridgelist = []
     def update_service(self, zeroconf, type, name):
@@ -162,9 +164,9 @@ def register():
         elif('success') in bridgeresponse[0]:
             # generate client.json file
             clientdata = bridgeresponse[0]["success"]
-            f = open("client.json", "w")
-            f.write(json.dumps(clientdata))
-            f.close()
+            client_path = Path(CLIENT_PATH)
+            with client_path.open("w") as f:
+                f.write(json.dumps(clientdata))
             print("INFO: Username and client key generated to access the bridge Entertainment API functionality.")
             break
         else:
@@ -188,11 +190,11 @@ clientdata = []
 
 verbose("Checking whether Harmonizer application is already registered (Looking for client.json file).")
 
-if Path("./client.json").is_file():
-    f = open("client.json", "r")
-    jsonstr = f.read()
-    clientdata = json.loads(jsonstr)
-    f.close()
+client_path = Path(CLIENT_PATH)
+if client_path.is_file():
+    with client_path.open() as f:
+        jsonstr = f.read()
+        clientdata = json.loads(jsonstr)
     verbose("INFO: Client data found from client.json file.")
     setupurl = baseurl + "/" + clientdata['username']
     r = requests.get(url = setupurl)
